@@ -1,0 +1,44 @@
+name: Update CloudLinux Vulnerabilities
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  update-cloudlinux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Download latest CSV and check for changes
+        run: |
+          python update_tuxcare_csv.py
+        
+      - name: Convert CSV to JSON if needed
+        run: |
+          if [ -f tuxcare_updated.csv ]; then
+            python cve_converter.py tuxcare_updated.csv
+            rm tuxcare_updated.csv
+            mv tuxcare.csv.new tuxcare.csv
+          fi
+
+      - name: Commit and push if there are changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add -A
+          git diff --staged --quiet || (git commit -m "Update CloudLinux vulnerability data" && git push)
