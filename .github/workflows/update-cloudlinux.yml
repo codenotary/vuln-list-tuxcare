@@ -33,7 +33,6 @@ jobs:
           if [ -f tuxcare_updated.csv ]; then
             python cve_converter.py tuxcare_updated.csv
             rm tuxcare_updated.csv
-            mv tuxcare.csv.new tuxcare.csv
           fi
 
       - name: Commit and push if there are changes
